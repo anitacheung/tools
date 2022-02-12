@@ -17,32 +17,34 @@ class PDFReader:
             self.pathname = pathname
             self.regex = regex
     
-    def output(self):
-        """Gets and parses pdf readout"""
-
-        # Iterate through folder to find pdf
+    def iterate(self):
         for item in os.listdir(self.pathname):
-            if ('Error Codes.pdf' in item):
-                newname = item[:-4]
-                input = PyPDF2.PdfFileReader(self.pathname + '/' + item)
+            if ('.pdf' in item):
+                self.output(item, True)
 
-                # Read PDf and split by pattern
-                try:
-                    outputs = str(input.getPage(0).extractText())
-                    outputs = re.split(self.regex, outputs)
-                    outputs = '\n'.join(outputs).replace('\n\n', '\n')
-                    outputs = outputs.split('\n')
+    def output(self, item, write=False):
+        """Gets and parses pdf readout"""
+        newname = item[:-4]
+        input = PyPDF2.PdfFileReader(self.pathname + '/' + item)
 
-                    # Outputs to file
-                    with open(self.pathname + '/' + newname + '.txt', 'w+') as f:
-                        for line in outputs:
-                            f.write(line)
-                    f.close()
-                except:
-                    pass
+        # Read PDf and split by pattern
+        outputs = str(input.getPage(0).extractText())
+        outputs = re.split(self.regex, outputs)
+    
+        if write:
+            self.write(newname, outputs)
+        
+        return outputs
 
+    def write(self, newname, outputs):
+        # Outputs to file
+        with open(self.pathname + '/' + newname + '.txt', 'w+') as f:
+            for line in outputs:
+                f.write(line)
+        f.close()
+                
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         pattern = '([0-9][0-9]' + '\[\w\w\w\w\.[0-9][0-9][0-9][0-9]\]' + ')'
-        pdfreader = PDFReader(sys.argv[1])
-        pdfreader.output()
+        pdfreader = PDFReader(sys.argv[1], pattern)
+        pdfreader.iterate()
